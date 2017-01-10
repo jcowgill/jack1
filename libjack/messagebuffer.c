@@ -32,7 +32,6 @@
 #include <stdio.h>
 
 #include "messagebuffer.h"
-#include "atomicity.h"
 #include "internal.h"
 
 /* MB_NEXT() relies on the fact that MB_BUFFERS is a power of two */
@@ -44,7 +43,7 @@ static char mb_buffers[MB_BUFFERS][MB_BUFFERSIZE];
 static volatile unsigned int mb_initialized = 0;
 static volatile unsigned int mb_inbuffer = 0;
 static volatile unsigned int mb_outbuffer = 0;
-static volatile _Atomic_word mb_overruns = 0;
+static volatile atomic_int mb_overruns = 0;
 static pthread_t mb_writer_thread;
 static pthread_mutex_t mb_write_lock;
 static pthread_cond_t mb_ready_cond;
@@ -103,7 +102,7 @@ jack_messagebuffer_init ()
 	pthread_mutex_init (&mb_write_lock, NULL);
 	pthread_cond_init (&mb_ready_cond, NULL);
 
-	mb_overruns = 0;
+	atomic_init (&mb_overruns, 0);
 	mb_initialized = 1;
 
 	if (jack_thread_creator (&mb_writer_thread, NULL, &mb_thread_func, NULL) != 0) {
@@ -126,9 +125,9 @@ jack_messagebuffer_exit ()
 	pthread_join (mb_writer_thread, NULL);
 	mb_flush ();
 
-	if (mb_overruns) {
+	if (atomic_load_explicit (&mb_overruns, memory_order_relaxed)) {
 		jack_error ("WARNING: %d message buffer overruns!",
-			    mb_overruns);
+			    atomic_load_explicit (&mb_overruns, memory_order_relaxed));
 	}
 
 	pthread_mutex_destroy (&mb_write_lock);
@@ -161,7 +160,7 @@ jack_messagebuffer_add (const char *fmt, ...)
 		pthread_cond_signal (&mb_ready_cond);
 		pthread_mutex_unlock (&mb_write_lock);
 	} else {                        /* lock collision */
-		atomic_add (&mb_overruns, 1);
+		atomic_fetch_add_explicit (&mb_overruns, 1, memory_order_relaxed);
 	}
 }
 

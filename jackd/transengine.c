@@ -277,7 +277,7 @@ jack_transport_init (jack_engine_t *engine)
 	memset (&ectl->pending_time, 0, sizeof(ectl->pending_time));
 	memset (&ectl->request_time, 0, sizeof(ectl->request_time));
 	ectl->prev_request = 0;
-	ectl->seq_number = 1;           /* can't start at 0 */
+	atomic_init(&ectl->seq_number, 1);  /* can't start at 0 */
 	ectl->new_pos = 0;
 	ectl->pending_pos = 0;
 	ectl->pending_frame = 0;

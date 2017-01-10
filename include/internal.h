@@ -26,6 +26,7 @@
 #ifndef __jack_internal_h__
 #define __jack_internal_h__
 
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <limits.h>
@@ -60,7 +61,6 @@ void jack_set_clock_source (jack_timer_type_t);
 const char* jack_clock_source_name (jack_timer_type_t);
 
 #include <sysdeps/time.h>
-#include <sysdeps/atomicity.h>
 
 #ifdef JACK_USE_MACH_THREADS
 #include <sysdeps/mach_port.h>
@@ -161,7 +161,7 @@ typedef struct {
 	jack_position_t pending_time;           /* position for next cycle */
 	jack_position_t request_time;           /* latest requested position */
 	jack_unique_t prev_request;             /* previous request unique ID */
-	volatile _Atomic_word seq_number;       /* unique ID sequence number */
+	atomic_int seq_number;                  /* unique ID sequence number */
 	int8_t new_pos;                         /* new position this cycle */
 	int8_t pending_pos;                     /* new position request pending */
 	jack_nframes_t pending_frame;           /* pending frame number */

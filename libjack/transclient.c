@@ -27,7 +27,6 @@
 
 #include <jack/uuid.h>
 
-#include "atomicity.h"
 #include "internal.h"
 #include "local.h"
 
@@ -39,7 +38,7 @@ jack_unique_t
 jack_generate_unique_id (jack_control_t *ectl)
 {
 	/* The jack_unique_t is an opaque type. */
-	return exchange_and_add (&ectl->seq_number, 1);
+	return atomic_fetch_add_explicit (&ectl->seq_number, 1, memory_order_relaxed);
 }
 
 static inline void
