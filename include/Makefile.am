@@ -1,7 +1,6 @@
 MAINTAINERCLEANFILES = Makefile.in version.h
 
 noinst_HEADERS =		\
-	atomicity.h		\
 	bitset.h		\
 	driver.h 		\
 	driver_interface.h	\
